@@ -1,0 +1,35 @@
+{
+  "name": "basebenodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --exec babel-node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PhamXuanDuy20200114/BaseBeNodeJS.git"
+  },
+  "author": "Pham Xuan Duy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PhamXuanDuy20200114/BaseBeNodeJS/issues"
+  },
+  "homepage": "https://github.com/PhamXuanDuy20200114/BaseBeNodeJS#readme",
+  "dependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/node": "^7.25.0",
+    "@babel/preset-env": "^7.25.4",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.3",
+    "nodemon": "^3.1.7",
+    "sequelize": "^6.37.3",
+    "sequelize-cli": "^6.6.2"
+  }
+}
