@@ -8,7 +8,7 @@ const verifyToken = (req, res, next) => {
         jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
             if (err) {
                 res.status(403).json({
-                    errCode: 5,
+                    errCode: 403,
                     message: 'Token is not valid'
                 })
             }
@@ -18,33 +18,20 @@ const verifyToken = (req, res, next) => {
         });
     } else {
         res.status(401).json({
-            errCode: 6,
+            errCode: 401,
             message: 'You are not authenticated'
         });
     }
 }
 
-const verifyUserToken = (req, res, next) => {
+const verifyOwnerToken = (req, res, next) => {
     verifyToken(req, res, () => {
-        if ((req.params.id == req.user.id) & (req.user.roleId == 'R3')) {
+        if ((req.params.id == req.user.id) || (req.user.roleId == 'R1')) {
             next();
         } else {
             return res.status(403).json({
-                errCode: 6,
-                message: 'You are not user'
-            })
-        }
-    })
-}
-
-const verifyDocterToken = (req, res, next) => {
-    verifyToken(req, res, () => {
-        if ((req.params.id == req.user.id) & (req.user.roleId == 'R2')) {
-            next();
-        } else {
-            return res.status(403).json({
-                errCode: 6,
-                message: 'You are not doctor'
+                errCode: 403,
+                message: 'You are not owner'
             })
         }
     })
@@ -52,11 +39,11 @@ const verifyDocterToken = (req, res, next) => {
 
 const verifyAdminToken = (req, res, next) => {
     verifyToken(req, res, () => {
-        if ((req.params.id == req.user.id) || (req.user.roleId == 'R1')) {
+        if (req.user.roleId == 'R1') {
             next();
         } else {
             return res.status(403).json({
-                errCode: 6,
+                errCode: 403,
                 message: 'You are not Admin'
             })
         }
@@ -66,6 +53,5 @@ const verifyAdminToken = (req, res, next) => {
 module.exports = {
     verifyToken,
     verifyAdminToken,
-    verifyUserToken,
-    verifyDocterToken
+    verifyOwnerToken
 }

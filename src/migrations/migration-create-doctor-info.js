@@ -10,7 +10,9 @@ module.exports = {
         type: Sequelize.BIGINT
       },
       doctorId: {
-        type: Sequelize.BIGINT
+        type: Sequelize.BIGINT,
+        allowNull: false,
+        unique: true
       },
       priceId: {
         type: Sequelize.STRING,
@@ -22,7 +24,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       clinicId: {
-        type: Sequelize.STRING,
+        type: Sequelize.BIGINT,
       },
       introduction: {
         type: Sequelize.TEXT,

@@ -14,7 +14,13 @@ module.exports = (sequelize, DataTypes) => {
     }, {});
 
     Allcode.associate = function (models) {
-        // Define associations here if necessary
+        Allcode.hasMany(models.User, { foreignKey: 'roleId', sourceKey: 'keyMap', as: 'roleData' });
+        Allcode.hasMany(models.User, { foreignKey: 'gender', sourceKey: 'keyMap', as: 'genderData' });
+        Allcode.hasMany(models.DoctorInfo, { foreignKey: 'priceId', sourceKey: 'keyMap', as: 'priceData' });
+        Allcode.hasMany(models.DoctorInfo, { foreignKey: 'positionId', sourceKey: 'keyMap', as: 'positionData' });
+        Allcode.hasMany(models.DoctorInfo, { foreignKey: 'paymentId', sourceKey: 'keyMap', as: 'paymentData' });
+        Allcode.hasMany(models.DoctorInfo, { foreignKey: 'statusId', sourceKey: 'keyMap', as: 'statusData' });
+        Allcode.hasMany(models.Clinic, { foreignKey: 'provinceId', sourceKey: 'keyMap', as: 'provinceData' });
     };
 
     return Allcode;

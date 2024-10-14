@@ -1,13 +1,12 @@
 import bcrypt from 'bcryptjs';
 import db from '../models/index';
 import jwt from 'jsonwebtoken';
-import user from '../models/user';
 require('dotenv').config();
 const salt = bcrypt.genSaltSync(10);
 const registerService = async (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!data.email || !data.password || !data.userName || !data.phonenumber || !data.gender) {
+            if (!data.email || !data.password || !data.username || !data.phonenumber || !data.birthdate || !data.gender) {
                 resolve({
                     errCode: 1,
                     message: 'Missing required parameters'
@@ -19,27 +18,87 @@ const registerService = async (data) => {
                     errCode: 2,
                     message: 'User has already existed'
                 });
+            } else {
+                const hash = hashPassword(data.password);
+                const user = await db.User.create({
+                    email: data.email,
+                    password: hash,
+                    username: data.username,
+                    phonenumber: data.phonenumber,
+                    address: data.address,
+                    birthdate: data.birthdate,
+                    gender: data.gender,
+                    image: data.image,
+                    roleId: 'R3'
+                });
+                resolve({
+                    errCode: 0,
+                    message: 'Success',
+                    data: user
+                });
             }
-            const hash = hashPassword(data.password);
-            const user = await db.User.create({
-                email: data.email,
-                password: hash,
-                username: data.userName,
-                phonenumber: data.phonenumber,
-                address: data.address,
-                gender: data.gender,
-                image: data.image,
-                roleId: 'R3'
-            });
-            resolve({
-                errCode: 0,
-                message: 'Success',
-                data: user
-            });
         } catch (e) {
             reject(e);
         }
 
+    });
+}
+
+const doctorRegisterService = async (data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!data.email || !data.password || !data.userName || !data.phonenumber || !data.address ||
+                !data.priceId || !data.positionId || !data.paymentId || !data.clinicId ||
+                !data.introduction || !data.specializations || !data.workProcess || !data.training) {
+                resolve({
+                    errCode: 1,
+                    message: 'Missing required parameters'
+                });
+            }
+            const userExist = await findUserByEmail(data.email);
+            if (userExist) {
+                resolve({
+                    errCode: 2,
+                    message: 'User has already existed'
+                });
+            } else {
+                const hash = hashPassword(data.password);
+                const user = await db.User.create({
+                    email: data.email,
+                    password: hash,
+                    username: data.userName,
+                    phonenumber: data.phonenumber,
+                    address: data.address,
+                    gender: data.gender,
+                    image: data.image,
+                    roleId: 'R2'
+                });
+                const doctorData = await db.DoctorInfo.create({
+                    doctorId: user.id,
+                    priceId: data.priceId,
+                    positionId: data.positionId,
+                    paymentId: data.paymentId,
+                    clinicId: data.clinicId,
+                    introduction: data.introduction,
+                    specializations: data.specializations,
+                    workProcess: data.workProcess,
+                    training: data.training,
+                    project: data.project,
+                    statusId: 'ST1'
+                });
+                resolve({
+                    errCode: 0,
+                    message: 'Success',
+                    data: {
+                        user: user,
+                        doctorData: doctorData
+                    }
+                });
+            }
+        } catch (e) {
+            console.log(e);
+            reject(e);
+        }
     });
 }
 const loginService = async (data) => {
@@ -50,106 +109,92 @@ const loginService = async (data) => {
                     errCode: 1,
                     message: 'Missing require parameter'
                 });
-            }
-            const userExist = await findUserByEmail(data.email);
-            if (!userExist) {
-                resolve({
-                    errCode: 3,
-                    message: 'Account is not exist'
+            } else {
+                const userExist = await db.User.findOne({
+                    where: {
+                        email: data.email
+                    },
+                    raw: false
                 });
-            }
-            if (!checkPassword(data.password, userExist.password)) {
-                resolve({
-                    errCode: 4,
-                    message: 'Password is incorrect'
-                });
-            }
-            const refreshToken = userExist.refreshtoken;
-            if (refreshToken) {
-                const haveRefreshToken = jwt.verify(refreshToken, process.env.JWT_REFRESH);
-                if (!haveRefreshToken) {
-                    userExist.refreshtoken = generateRefreshToken(userExist);
-                    updateUser = await userExist.save();
-                    const token = generateAccessToken(userExist);
-                    const { password, ...another } = userExist.dataValues;
+                console.log('>>>>>>>>>', userExist);
+                if (!userExist) {
                     resolve({
-                        errCode: 0,
-                        message: 'Succcess',
-                        data: another,
-                        token: token,
+                        errCode: 3,
+                        message: 'Account is not exist'
                     });
                 } else {
-                    const token = generateAccessToken(userExist);
-                    const { password, ...another } = userExist.dataValues;
+                    if (!checkPassword(data.password, userExist.password)) {
+                        resolve({
+                            errCode: 4,
+                            message: 'Password is incorrect'
+                        });
+                    } else {
+                        const refreshToken = userExist.refreshtoken;
+                        if (!refreshToken) {
+                            const newRefreshToken = generateRefreshToken(userExist);
+                            const newAccessToken = generateAccessToken(userExist);
+                            userExist.refreshtoken = newRefreshToken;
+                            await userExist.save();
+                            const { password, ...another } = userExist.dataValues
+                            resolve({
+                                errCode: 0,
+                                mesage: 'Success',
+                                data: another,
+                                token: newAccessToken
+                            })
+                        } else {
+                            jwt.verify(refreshToken, process.env.JWT_REFRESH, async (err, user) => {
+                                if (err) {
+                                    const newRefreshToken = generateRefreshToken(userExist);
+                                    const newAccessToken = generateAccessToken(userExist);
+                                    userExist.refreshtoken = newRefreshToken;
+                                    await userExist.save();
+                                    const { password, ...another } = userExist.dataValues
+                                    resolve({
+                                        errCode: 0,
+                                        mesage: 'Success',
+                                        data: another,
+                                        token: newAccessToken
+                                    })
+
+                                } else {
+                                    const newAccessToken = generateAccessToken(userExist);
+                                    const { password, ...another } = userExist.dataValues
+                                    resolve({
+                                        errCode: 0,
+                                        mesage: 'Success',
+                                        data: another,
+                                        token: newAccessToken
+                                    })
+                                }
+                            })
+                        }
+                    }
+                }
+
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+const refreshAccessToken = async (refreshToken, id, roleId, res) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            jwt.verify(refreshToken, process.env.JWT_REFRESH, (err, user) => {
+                if (err) {
+                    return res.status(401).json({
+                        errCode: 401,
+                        message: 'You are not authenticated'
+                    })
+                } else {
+                    const newAccessToken = generateAccessToken({ id, roleId });
                     resolve({
                         errCode: 0,
-                        message: 'Succcess',
-                        data: another,
-                        token: token,
+                        message: 'Success',
+                        accessToken: newAccessToken,
                     });
                 }
-            }
-            const token = generateAccessToken(userExist);
-            const newRefreshToken = generateRefreshToken(userExist);
-            userExist.refreshtoken = newRefreshToken;
-            await userExist.save();
-            const { password, ...another } = userExist.dataValues;
-            resolve({
-                errCode: 0,
-                message: 'Succcess',
-                data: another,
-                token: token,
-            });
-        } catch (e) {
-            reject(e);
-        }
-    });
-}
-const refreshAccessToken = async (refreshToken) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            jwt.sign(refreshToken, process.env.JWT_REFRESH, (err, user) => {
-                if (err) {
-                    return res.status(403).json({
-                        errCode: 5,
-                        message: 'Token is not valid'
-                    })
-                }
-                const newAccessToken = generateAccessToken(user);
-                const newRefreshToken = generateRefreshToken(user);
-                resolve({
-                    errCode: 0,
-                    message: 'Success',
-                    accessToken: newAccessToken,
-                    refreshToken: newRefreshToken
-                });
-            })
-        } catch (e) {
-            reject(e);
-        }
-    });
-}
-
-const logout = async (id) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            if (!id) {
-                resolve({
-                    errCode: 1,
-                    message: 'Missing require parameter'
-                })
-            }
-            const user = await db.User.findOne({
-                where: {
-                    id: id
-                },
-                raw: false
-            })
-            user.refreshtoken = '';
-            await user.save();
-            resolve({
-                errCode: 0,
-                message: 'Success'
             })
         } catch (e) {
             reject(e);
@@ -181,7 +226,7 @@ const generateAccessToken = (user) => {
         {
             id: user.id,
             roleId: user.roleId,
-            exp: Math.floor(Date.now() / 1000) + 30 * 60
+            exp: Math.floor(Date.now() / 1000) + 10
         },
         process.env.JWT_SECRET,
         {
@@ -195,7 +240,7 @@ const generateRefreshToken = (user) => {
         {
             id: user.id,
             roleId: user.roleId,
-            exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24
+            exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 3
         },
         process.env.JWT_REFRESH,
         {
@@ -207,6 +252,6 @@ module.exports = {
     registerService,
     loginService,
     refreshAccessToken,
-    logout
+    doctorRegisterService
 }
 

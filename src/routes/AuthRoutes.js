@@ -4,9 +4,9 @@ let router = express.Router();
 
 let initAuthRoutes = (app) => {
     router.post('/register', authController.register);
+    router.post('/doctor-register', authController.doctorRegister);
     router.post('/login', authController.login);
     router.post('/refresh-token', authController.refreshAccessToken);
-    router.post('/logout', authController.logout);
     return app.use("/api", router);
 }
 

@@ -1,4 +1,5 @@
 import db from '../models/index';
+const fs = require('fs').promises; // Sử dụng fs.promises để có thể dùng với await
 
 const getAllUser = async () => {
     return new Promise(async (resolve, reject) => {
@@ -6,7 +7,16 @@ const getAllUser = async () => {
             let listUser = await db.User.findAll({
                 where: {
                     roleId: 'R3'
-                }
+                },
+                attributes: {
+                    exclude: ['password'],
+                },
+                include: [
+                    { model: db.Allcode, as: 'roleData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'genderData', attributes: ['value'] }
+                ],
+                raw: false,
+                nest: true
             });
             resolve({
                 errCode: 0,
@@ -19,7 +29,7 @@ const getAllUser = async () => {
     })
 }
 
-const editUser = async (id, data) => {
+const editUser = async (id, data, path) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (!id) {
@@ -32,12 +42,31 @@ const editUser = async (id, data) => {
                 where: {
                     id: id
                 },
-                raw: false
+                include: [
+                    { model: db.Allcode, as: 'roleData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'genderData', attributes: ['value'] }
+                ],
+                raw: false,
+                nest: true
             })
+            if (!user) {
+                resolve({
+                    errCode: 2,
+                    message: 'The user isn\'t exist'
+                });
+            }
             user.username = data.username;
             user.address = data.address;
             user.phonenumber = data.phonenumber;
-            user.image = data.image;
+            user.birthdate = data.birthdate;
+            if (user.image) {
+                const path = user.image.replace('http:\\\\localhost:8080\\', 'src\\'); // delete old image
+                await fs.unlink(path); // delete old image
+            }
+            let listPath = path.split('\\');
+            path = listPath.slice(1).join('\\');
+            let modifiedPath = 'http:\\\\localhost:8080\\' + path;
+            user.image = modifiedPath;
             user.gender = data.gender;
             const updateUser = await user.save();
             resolve({
@@ -55,16 +84,22 @@ const deleteUser = async (id) => {
     return new Promise(async (resolve, reject) => {
         try {
             let user = await db.User.findOne({
-                where: { id: id }
+                where: { id: id },
+                raw: false
             })
             if (!user) {
                 resolve({ errCode: 2, message: 'The user isn\'t exist' });
+            } else {
+                if (user.image) {
+                    const path = user.image.replace('http:\\\\localhost:8080\\', 'src\\'); // delete old image
+                    await fs.unlink(path); // delete old image
+                }
+                await db.User.destroy({ where: { id: id } });
+                resolve({
+                    errCode: 0,
+                    message: 'Success',
+                })
             }
-            await db.User.destroy({ where: { id: id } });
-            resolve({
-                errCode: 0,
-                message: 'Success'
-            })
         } catch (e) {
             reject(e);
         }

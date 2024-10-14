@@ -17,8 +17,9 @@ const getAllUser = async (req, res) => {
 const editUser = async (req, res) => {
     const id = req.params.id;
     const user = req.body;
+    const path = req.file.path;
     try {
-        const data = await userService.editUser(id, user);
+        const data = await userService.editUser(id, user, path);
         res.status(200).json(data);
     } catch (e) {
         console.log('error: ', e)
