@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     }, {});
 
     DoctorSpecialty.associate = function (models) {
-        
+
     };
 
     return DoctorSpecialty;

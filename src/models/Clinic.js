@@ -14,13 +14,20 @@ module.exports = (sequelize, DataTypes) => {
         email: {
             type: DataTypes.STRING
         },
+        website: {
+            type: DataTypes.STRING
+        },
         districtID: {
             type: DataTypes.STRING
         },
+
         provinceId: {
             type: DataTypes.STRING
         },
         image: {
+            type: DataTypes.STRING
+        },
+        background: {
             type: DataTypes.STRING
         },
         descriptionHTML: {

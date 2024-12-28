@@ -2,20 +2,25 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('DoctorSpecialtys', {
+    await queryInterface.createTable('DoctorSpecialties', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.BIGINT
       },
-      doctorid: {
+      doctorId: {
         type: Sequelize.BIGINT,
         allowNull: false
       },
-      specialtyid: {
+      specialtyId: {
         type: Sequelize.BIGINT,
         allowNull: false
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW')
       },
       updatedAt: {
         allowNull: false,
@@ -26,6 +31,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('DoctorSpecialtys');
+    await queryInterface.dropTable('DoctorSpecialties');
   }
 };

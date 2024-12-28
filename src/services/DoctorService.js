@@ -1,38 +1,43 @@
 import db from '../models/index';
-const getAllDoctorsNotComfirm = async () => {
+import { sendConfirmDoctorResult } from './EmailService';
+let fs = require('fs').promises; // Sử dụng fs.promises để có thể dùng với await
+let getAllDoctorsNotComfirm = async () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const listDoctor = await db.User.findAll({
+            let listDoctorInfo = await db.DoctorInfo.findAll({
                 where: {
-                    roleId: 'R2',
-                },
-                attributes: {
-                    exclude: ['password']
+                    statusId: 'S1'
                 },
                 include: [
                     {
-                        model: db.DoctorInfo, as: 'doctorData',
-                        where: {
-                            statusId: 'S1'  // Điều kiện lọc statusId trong DoctorInfo
+                        model: db.User, as: 'doctorData',
+                        attributes: {
+                            exclude: ['password']
                         },
-                        attributes: ['introduction', 'specializations', 'workProcess', 'training'],
                         include: [
-                            { model: db.Allcode, as: 'priceData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'positionData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'statusData', attributes: ['value'] },
-                            { model: db.Clinic, as: 'clinicData', attributes: ['name', 'address', 'image'] }
+                            { model: db.Allcode, as: 'genderData', attributes: ['value'] }
                         ]
                     },
-                    { model: db.Allcode, as: 'genderData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'statusData', attributes: ['value'] },
+                    { model: db.Clinic, as: 'clinicData', attributes: ['id', 'name', 'address'] },
+                    {
+                        model: db.Specialty,
+                        as: 'specialtyData',
+                        through: { attributes: [] }, // Không lấy thông tin từ bảng trung gian
+                        attributes: ['id', 'name']
+                    }
                 ],
                 raw: false,
                 nest: true
-            });
+            })
+
             resolve({
                 errCode: 0,
                 message: 'Success',
-                data: listDoctor
+                data: listDoctorInfo
             })
         } catch (e) {
             console.log('err: ', e);
@@ -41,75 +46,92 @@ const getAllDoctorsNotComfirm = async () => {
     });
 }
 
-const getAllDoctorConfirm = async () => {
+let getAllDoctorConfirm = async () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const listDoctor = await db.User.findAll({
+            let listDoctorInfo = await db.DoctorInfo.findAll({
                 where: {
-                    roleId: 'R2',
-                },
-                attributes: {
-                    exclude: ['password']
+                    statusId: 'S2'
                 },
                 include: [
                     {
-                        model: db.DoctorInfo, as: 'doctorData',
-                        where: {
-                            statusId: 'S2'  // Điều kiện lọc statusId trong DoctorInfo
+                        model: db.User, as: 'doctorData',
+                        attributes: {
+                            exclude: ['password']
                         },
-                        attributes: ['introduction', 'specializations', 'workProcess', 'training'],
                         include: [
-                            { model: db.Allcode, as: 'priceData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'positionData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'statusData', attributes: ['value'] },
-                            { model: db.Clinic, as: 'clinicData', attributes: ['name', 'address', 'image'] }
+                            { model: db.Allcode, as: 'genderData', attributes: ['value'] }
                         ]
                     },
-                    { model: db.Allcode, as: 'genderData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'statusData', attributes: ['value'] },
+                    { model: db.Clinic, as: 'clinicData', attributes: ['id', 'name', 'address'] },
+                    {
+                        model: db.Specialty,
+                        as: 'specialtyData',
+                        through: { attributes: [] }, // Không lấy thông tin từ bảng trung gian
+                        attributes: ['id', 'name']
+                    },
                 ],
                 raw: false,
                 nest: true
-            });
+            })
+
             resolve({
                 errCode: 0,
                 message: 'Success',
-                data: listDoctor
+                data: listDoctorInfo
             })
         } catch (e) {
+            console.log('err: ', e);
             reject(e);
         }
     });
 }
 
-const getDocyorById = async (id) => {
+let getDoctorById = async (id) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const doctor = await db.User.findOne({
+            let doctor = await db.DoctorInfo.findOne({
                 where: {
-                    id: id,
-                    roleId: 'R2'
+                    doctorId: id,
+                    statusId: 'S2'
                 },
                 attributes: {
-                    exclude: ['password']
+                    exclude: ['profile', 'certificate']
                 },
                 include: [
                     {
-                        model: db.DoctorInfo, as: 'doctorData',
-                        attributes: ['introduction', 'specializations', 'workProcess', 'training'],
+                        model: db.User, as: 'doctorData',
+                        attributes: {
+                            exclude: ['password']
+                        },
                         include: [
-                            { model: db.Allcode, as: 'priceData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'positionData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
-                            { model: db.Allcode, as: 'statusData', attributes: ['value'] },
-                            { model: db.Clinic, as: 'clinicData', attributes: ['name', 'address', 'image'] }
+                            { model: db.Allcode, as: 'genderData', attributes: ['value'] }
                         ]
                     },
-                    { model: db.Allcode, as: 'genderData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'statusData', attributes: ['value'] },
+                    {
+                        model: db.Clinic, as: 'clinicData',
+                        include: [
+                            { model: db.Allcode, as: 'provinceData', attributes: ['value'] }
+                        ]
+                    },
+                    {
+                        model: db.Specialty,
+                        as: 'specialtyData',
+                        through: { attributes: [] }, // Không lấy thông tin từ bảng trung gian
+                        attributes: ['id', 'name']
+                    }
                 ],
                 raw: false,
                 nest: true
-            });
+            })
             resolve({
                 errCode: 0,
                 message: 'Success',
@@ -121,17 +143,249 @@ const getDocyorById = async (id) => {
     })
 }
 
-const confirmDoctor = async (id) => {
+let getMoreDoctorInfo = async (id) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const doctor = await db.DoctorInfo.findOne({
+            let doctor = await db.DoctorInfo.findOne({
                 where: {
-                    doctorId: id,
+                    doctorId: id
+                },
+                attributes: {
+                    exclude: ['profile', 'certificate']
+                },
+                include: [
+                    { model: db.User, as: 'doctorData', attributes: ['username', 'image'] },
+                    { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                    { model: db.Clinic, as: 'clinicData', atrributes: ['id', 'name', 'address'] },
+                ],
+                raw: false,
+                nest: true
+            })
+            resolve({
+                errCode: 0,
+                message: 'Success',
+                data: doctor
+            })
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+let getRandomDoctor = async () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let listDoctorInfo = await db.DoctorInfo.findAll({
+                where: {
+                    statusId: 'S2'
+                },
+                attributes: {
+                    exclude: ['profile', 'certificate']
+                },
+                include: [
+                    {
+                        model: db.User, as: 'doctorData',
+                        attributes: {
+                            exclude: ['password']
+                        },
+                        include: [
+                            { model: db.Allcode, as: 'genderData', attributes: ['value'] }
+                        ]
+                    },
+                    { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'statusData', attributes: ['value'] },
+                    { model: db.Clinic, as: 'clinicData', attributes: ['id', 'name', 'address'] },
+                    {
+                        model: db.Specialty,
+                        as: 'specialtyData',
+                        through: { attributes: [] }, // Không lấy thông tin từ bảng trung gian
+                        attributes: ['id', 'name']
+                    }
+                ],
+                raw: false,
+                nest: true
+            })
+            let listRandom = [];
+            if (listDoctorInfo.length > 3) {
+                for (let i = 0; i < 6; i++) {
+                    let randomIndex = Math.floor(Math.random() * listDoctorInfo.length);
+                    listRandom.push(listDoctorInfo[randomIndex]);
+                    listDoctorInfo.splice(randomIndex, 1);
+                }
+            } else {
+                listRandom = listDoctorInfo;
+            }
+            resolve({
+                errCode: 0,
+                message: 'Success',
+                data: listRandom
+            })
+        } catch (e) {
+            console.log('err: ', e);
+            reject(e);
+        }
+    });
+}
+
+let getDoctorBySpecialty = async (specialtyId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let listDoctorInfo = await db.DoctorInfo.findAll({
+                where: {
+                    statusId: 'S2'
+                },
+                attributes: {
+                    exclude: ['profile', 'certificate']
+                },
+                include: [
+                    {
+                        model: db.User, as: 'doctorData',
+                        attributes: {
+                            exclude: ['password']
+                        },
+                    },
+                    {
+                        model: db.Clinic, as: 'clinicData', attributes: ['id', 'name'],
+                        include: [
+                            { model: db.Allcode, as: 'provinceData', attributes: ['value'] }
+                        ]
+                    },
+                    {
+                        model: db.Specialty,
+                        as: 'specialtyData',
+                        through: { attributes: [] },
+                        attributes: ['id', 'name']
+                    }
+                ],
+                raw: false,
+                nest: true
+            });
+
+            let listDoctor = listDoctorInfo.filter(doctor =>
+                doctor.specialtyData.some(specialty => {
+                    return specialty.id == specialtyId
+                })
+            );
+
+            if (listDoctor.length > 0) {
+                resolve({
+                    errCode: 0,
+                    message: 'Success',
+                    data: listDoctor
+                });
+            } else {
+                resolve({
+                    errCode: 0,
+                    message: 'No doctor found',
+                    data: []
+                });
+            }
+        } catch (e) {
+            console.log('err: ', e);
+            throw e;
+        }
+    });
+};
+
+let getDoctorBySpecialtyAndProvince = async (specialtyId, provinceId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let listDoctorInfo = await db.DoctorInfo.findAll({
+                where: {
+                    statusId: 'S2'
+                },
+                attributes: {
+                    exclude: ['profile', 'certificate']
+                },
+                include: [
+                    {
+                        model: db.User, as: 'doctorData',
+                        attributes: {
+                            exclude: ['password']
+                        },
+                    },
+                    {
+                        model: db.Clinic, as: 'clinicData', attributes: ['id', 'name'],
+                        include: [
+                            { model: db.Allcode, as: 'provinceData', attributes: ['keyMap', 'value'] }
+                        ]
+                    },
+                    {
+                        model: db.Specialty,
+                        as: 'specialtyData',
+                        through: { attributes: [] },
+                        attributes: ['id', 'name']
+                    }
+                ],
+                raw: false,
+                nest: true
+            });
+
+            let listDoctor = listDoctorInfo.filter(doctor =>
+                doctor.specialtyData.some(specialty => {
+                    return specialty.id == specialtyId
+                })
+            );
+            listDoctor = listDoctor.filter(doctor => doctor.clinicData.provinceData.keyMap == provinceId);
+            if (listDoctor.length > 0) {
+                resolve({
+                    errCode: 0,
+                    message: 'Success',
+                    data: listDoctor
+                });
+            } else {
+                resolve({
+                    errCode: 0,
+                    message: 'No doctor found',
+                    data: []
+                });
+            }
+        } catch (e) {
+            console.log('err: ', e);
+            throw e;
+        }
+    });
+};
+
+let confirmDoctor = async (id) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let doctor = await db.DoctorInfo.findOne({
+                where: {
+                    id: id,
                     statusId: 'S1'
                 },
-                raw: false
+                include: [
+                    {
+                        model: db.User, as: 'doctorData',
+                        attributes: {
+                            exclude: ['password']
+                        },
+                        include: [
+                            { model: db.Allcode, as: 'genderData', attributes: ['value'] }
+                        ]
+                    },
+                    { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                    { model: db.Allcode, as: 'statusData', attributes: ['value'] },
+                    { model: db.Clinic, as: 'clinicData', attributes: ['id', 'name', 'address'] },
+                    {
+                        model: db.Specialty,
+                        as: 'specialtyData',
+                        through: { attributes: [] }, // Không lấy thông tin từ bảng trung gian
+                        attributes: ['id', 'name']
+                    }
+                ],
+                raw: false,
+                nest: true
             })
             doctor.statusId = 'S2';
+            await sendConfirmDoctorResult({ email: doctor.doctorData.email, status: 'CONFIRM' });
             await doctor.save();
             resolve({
                 errCode: 0,
@@ -144,42 +398,128 @@ const confirmDoctor = async (id) => {
     })
 }
 
-const updateDoctorInfo = async (id, data) => {
+let updateDoctorInfo = async (id, data, imagePath, profilePath, certificatePath) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!id) {
+            if (!id || !data.email || !data.username || !data.phonenumber || !data.address || !data.birthdate ||
+                !data.gender || !data.clinicId || !data.listSpecialtyId || !data.priceId || !data.paymentId || !data.positionId ||
+                !profilePath || !certificatePath) {
                 resolve({
                     errCode: 1,
                     message: 'Missing required parameter'
                 });
-            }
-            const doctor = await db.DoctorInfo.findOne({
-                where: {
-                    doctorId: id
-                },
-                raw: false
-            });
-            if (doctor) {
-                doctor.priceId = data.priceId;
-                doctor.positionId = data.positionId;
-                doctor.paymentId = data.paymentId;
-                doctor.clinicId = data.clinicId;
-                doctor.introduction = data.introduction;
-                doctor.specializations = data.specializations;
-                doctor.workProcess = data.workProcess;
-                doctor.training = data.training;
-                doctor.project = data.project;
-                await doctor.save();
-                resolve({
-                    errCode: 0,
-                    message: 'Success',
-                    data: doctor
-                });
             } else {
-                resolve({
-                    errCode: 2,
-                    message: 'Doctor not found'
+                let user = await db.User.findOne({
+                    where: {
+                        id: id,
+                    },
+                    raw: false
                 });
+                let doctor = await db.DoctorInfo.findOne({
+                    where: {
+                        doctorId: id
+                    },
+                    raw: false
+                });
+                if (user && doctor) {
+                    user.email = data.email;
+                    user.username = data.username;
+                    user.phonenumber = data.phonenumber;
+                    user.address = data.address;
+                    user.birthdate = data.birthdate;
+                    user.gender = data.gender;
+                    if (user.image) {
+                        let path = user.image.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                        await fs.unlink(path); // delete old image
+                    }
+                    let modifiedImgPath = '';
+                    if (imagePath) {
+                        let listPath = imagePath.split('\\');
+                        imagePath = listPath.slice(1).join('\\');
+                        modifiedImgPath = process.env.URL_BASE + imagePath;
+                    }
+                    user.image = modifiedImgPath;
+                    doctor.priceId = data.priceId;
+                    doctor.paymentId = data.paymentId;
+                    doctor.positionId = data.positionId;
+                    doctor.clinicId = data.clinicId;
+                    if (doctor.profile) {
+                        let path = doctor.profile.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                        await fs.unlink(path); // delete old image
+                    }
+                    let modifiedProfilePath = '';
+                    if (profilePath) {
+                        let listPath = profilePath.split('\\');
+                        profilePath = listPath.slice(1).join('\\');
+                        modifiedProfilePath = process.env.URL_BASE + profilePath;
+                    }
+                    if (doctor.certificate) {
+                        let path = doctor.certificate.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                        await fs.unlink(path); // delete old image
+                    }
+                    let modifiedCertificatePath = '';
+                    if (certificatePath) {
+                        let listPath = certificatePath.split('\\');
+                        certificatePath = listPath.slice(1).join('\\');
+                        modifiedCertificatePath = process.env.URL_BASE + certificatePath;
+                    }
+                    doctor.profile = modifiedProfilePath;
+                    doctor.certificate = modifiedCertificatePath;
+                    doctor.descriptionHTML = data.descriptionHTML;
+                    doctor.descriptionText = data.descriptionText;
+                    await user.save();
+                    await doctor.save();
+                    await db.DoctorSpecialty.destroy({
+                        where: {
+                            doctorId: id
+                        }
+                    }); // Xóa tất cả dữ liệu trong bảng trung gian
+                    for (let i = 0; i < data.listSpecialtyId.length; i++) {
+                        await db.DoctorSpecialty.create({
+                            doctorId: id,
+                            specialtyId: data.listSpecialtyId[i]
+                        });
+                    }
+                    let doctorInfo = await db.DoctorInfo.findOne({
+                        where: {
+                            doctorId: id,
+                        },
+                        include: [
+                            {
+                                model: db.User, as: 'doctorData',
+                                attributes: {
+                                    exclude: ['password']
+                                },
+                                include: [
+                                    { model: db.Allcode, as: 'genderData', attributes: ['value'] }
+                                ]
+                            },
+                            { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                            { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                            { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                            { model: db.Allcode, as: 'statusData', attributes: ['value'] },
+                            { model: db.Clinic, as: 'clinicData', attributes: ['id', 'name', 'address'] },
+                            {
+                                model: db.Specialty,
+                                as: 'specialtyData',
+                                through: { attributes: [] }, // Không lấy thông tin từ bảng trung gian
+                                attributes: ['id', 'name']
+                            }
+                        ],
+                        raw: false,
+                        nest: true
+                    })
+                    resolve({
+                        errCode: 0,
+                        message: 'Success',
+                        data: doctorInfo
+                    });
+                } else {
+                    resolve({
+                        errCode: 2,
+                        message: 'Doctor not found'
+                    });
+                }
             }
         } catch (e) {
             reject(e);
@@ -187,57 +527,178 @@ const updateDoctorInfo = async (id, data) => {
     });
 }
 
-const deleteDoctor = async (id) => {
+let rejectDoctor = async (id) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const user = await db.User.findOne({
-                where: {
-                    id: id,
-                    roleId: 'R2'
-                },
-                raw: false
-            });
-            const doctor = await db.DoctorInfo.findOne({
-                where: {
-                    doctorId: id
-                },
-                raw: false
-            });
-            if (doctor && user) {
-                await user.destroy();
-                await doctor.destroy();
-                const listDoctor = await db.User.findAll({
+            if (!id) {
+                resolve({
+                    errCode: 1,
+                    message: 'Missing required parameter'
+                });
+            } else {
+                let user = await db.User.findOne({
                     where: {
-                        roleId: 'R2',
+                        id: id
                     },
-                    attributes: {
-                        exclude: ['password']
+                    raw: false
+                });
+                await sendConfirmDoctorResult({ email: user.email, status: 'REJECT' });
+                await user.destroy();
+                let doctor = await db.DoctorInfo.findOne({
+                    where: {
+                        doctorId: id
                     },
-                    include: [
-                        {
-                            model: db.DoctorInfo, as: 'doctorData',
-                            where: {
-                                statusId: 'S2'  // Điều kiện lọc statusId trong DoctorInfo
-                            },
-                            attributes: ['introduction', 'specializations', 'workProcess', 'training'],
-                            include: [
-                                { model: db.Allcode, as: 'priceData', attributes: ['value'] },
-                                { model: db.Allcode, as: 'positionData', attributes: ['value'] },
-                                { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
-                                { model: db.Allcode, as: 'statusData', attributes: ['value'] },
-                                { model: db.Clinic, as: 'clinicData', attributes: ['name', 'address', 'image'] }
-                            ]
-                        },
-                        { model: db.Allcode, as: 'genderData', attributes: ['value'] },
-                    ],
-                    raw: false,
-                    nest: true
+                    raw: false
+                });
+                await doctor.destroy();
+                if (user.image) {
+                    let path = user.image.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                    await fs.unlink(path); // delete old image
+                }
+                if (doctor.profile) {
+                    let path = doctor.profile.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                    await fs.unlink(path); // delete old image
+                }
+                if (doctor.certificate) {
+                    let path = doctor.certificate.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                    await fs.unlink(path); // delete old image
+                }
+                await db.DoctorSpecialty.destroy({
+                    where: {
+                        doctorId: id
+                    }
                 });
                 resolve({
                     errCode: 0,
-                    message: 'Success',
-                    data: listDoctor
+                    message: 'Success'
                 });
+            }
+        } catch (e) {
+            reject(e);
+        }
+    })
+}
+
+let deleteDoctor = async (id) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!id) {
+                resolve({
+                    errCode: 1,
+                    message: 'Missing required parameter'
+                });
+            } else {
+                let user = await db.User.findOne({
+                    where: {
+                        id: id
+                    },
+                    raw: false
+                });
+                await user.destroy();
+                let doctor = await db.DoctorInfo.findOne({
+                    where: {
+                        doctorId: id
+                    },
+                    raw: false
+                });
+                await doctor.destroy();
+                if (user.image) {
+                    let path = user.image.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                    await fs.unlink(path); // delete old image
+                }
+                if (doctor.profile) {
+                    let path = doctor.profile.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                    await fs.unlink(path); // delete old image
+                }
+                if (doctor.certificate) {
+                    let path = doctor.certificate.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                    await fs.unlink(path); // delete old image
+                }
+                await db.DoctorSpecialty.destroy({
+                    where: {
+                        doctorId: id
+                    }
+                });
+                resolve({
+                    errCode: 0,
+                    message: 'Success'
+                });
+            }
+        } catch (e) {
+            reject(e);
+        }
+    })
+}
+
+let getScheduleDoctorByDate = async (id, date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log('>>>>>id: ', id);
+            console.log('>>>>>date: ', date);
+            if (!id || !date) {
+                resolve({
+                    errCode: 1,
+                    message: 'Missing required parameter'
+                });
+            } else {
+                let schedule = await db.Schedule.findAll({
+                    where: {
+                        doctorId: 27
+                    },
+                    raw: false
+                });
+
+                resolve({
+                    errCode: 0,
+                    message: 'Success',
+                    data: schedule
+                });
+            }
+        } catch (e) {
+            reject(e);
+        }
+    })
+}
+
+let saveDoctorSchedule = async (id, date, listTimes) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!id || !date || !listTimes) {
+                resolve({
+                    errCode: 1,
+                    message: 'Missing required parameter'
+                });
+            } else {
+                let doctor = await db.DoctorInfo.findOne({
+                    where: {
+                        doctorId: id
+                    }
+                });
+                if (doctor) {
+                    await db.Schedule.destroy({
+                        where: {
+                            doctorId: id,
+                            date: date
+                        }
+                    })
+                    for (let i = 0; i < listTimes.length; i++) {
+                        await db.Schedule.create({
+                            doctorId: id,
+                            date: date,
+                            timeId: listTimes[i],
+                            status: 'active'
+                        });
+                    }
+                    resolve({
+                        errCode: 0,
+                        message: 'Success',
+                    });
+                } else {
+                    resolve({
+                        errCode: 2,
+                        message: 'Doctor not found'
+                    });
+                }
             }
         } catch (e) {
             reject(e);
@@ -249,7 +710,14 @@ module.exports = {
     getAllDoctorsNotComfirm,
     confirmDoctor,
     getAllDoctorConfirm,
-    getDocyorById,
+    getRandomDoctor,
+    getDoctorById,
     updateDoctorInfo,
-    deleteDoctor
+    deleteDoctor,
+    getScheduleDoctorByDate,
+    saveDoctorSchedule,
+    getMoreDoctorInfo,
+    getDoctorBySpecialty,
+    getDoctorBySpecialtyAndProvince,
+    rejectDoctor
 }

@@ -39,7 +39,11 @@ module.exports = (sequelize, DataTypes) => {
     User.associate = function (models) {
         User.belongsTo(models.Allcode, { foreignKey: 'roleId', targetKey: 'keyMap', as: 'roleData' });
         User.belongsTo(models.Allcode, { foreignKey: 'gender', targetKey: 'keyMap', as: 'genderData' });
-        User.hasOne(models.DoctorInfo, { foreignKey: 'doctorId', as: 'doctorData' });
+        User.hasOne(models.DoctorInfo, { foreignKey: 'doctorId', sourceKey: 'id', as: 'doctorData' });
+        User.hasMany(models.Booking, { foreignKey: 'patientId', sourceKey: 'id', as: 'patientData' });
+        User.belongsToMany(models.Notebook, { through: models.AuthorNotebook, foreignKey: 'authorId', sourceKey: 'id', as: 'authorData' });
+        User.belongsToMany(models.Notebook, { through: models.CensorNotebook, foreignKey: 'censorId', sourceKey: 'id', as: 'censorData' });
+        User.hasMany(models.Comment, { foreignKey: 'patientId', sourceKey: 'id', as: 'commentData' });
     };
 
     return User;

@@ -1,15 +1,21 @@
 import DoctorController from '../controllers/DoctorController';
 import authMiddleware from '../middleware/AuthMiddleware';
+import { uploadProfileDoctorMiddleware } from "../middleware/UploadMiddleware";
 import express from "express";
 let router = express.Router();
 
 let initDoctorRoutes = (app) => {
     router.get('/not-confirmed', authMiddleware.verifyAdminToken, DoctorController.getAllDoctorNotConfirm);
     router.get('/confirmed', DoctorController.getAllDoctorConfirm);
-    router.get('/:id', DoctorController.getAllDoctorConfirm);
+    router.get('/random', DoctorController.getRandomDoctor);
+    router.get('/get-by-specialty-and-province', DoctorController.getDoctorBySpecialtyAndProvince);
+    router.get('/more-info/:id', DoctorController.getMoreDoctorInfo);
+    router.get('/:id', DoctorController.getDoctorById);
+    router.get('/get-by-specialty/:id', DoctorController.getDoctorBySpecialty);
     router.post('/confirm', authMiddleware.verifyAdminToken, DoctorController.confirmDoctor);
-    router.post('/:id', authMiddleware.verifyOwnerToken, DoctorController.updateDoctorInfo);
-    router.delete('/:id', authMiddleware.verifyOwnerToken, DoctorController.deleteDoctor);
+    router.post('/:id', authMiddleware.verifyDoctorToken, uploadProfileDoctorMiddleware, DoctorController.updateDoctorInfo);
+    router.delete('/:id', authMiddleware.verifyDoctorToken, DoctorController.deleteDoctor);
+    router.delete('/reject/:id', authMiddleware.verifyAdminToken, DoctorController.rejectDoctor);
     return app.use("/api/doctors", router);
 }
 

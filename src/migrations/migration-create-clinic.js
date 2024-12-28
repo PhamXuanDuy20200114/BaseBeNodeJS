@@ -21,6 +21,9 @@ module.exports = {
       email: {
         type: Sequelize.STRING
       },
+      website: {
+        type: Sequelize.STRING
+      },
       districtId: {
         type: Sequelize.STRING
       },
@@ -28,6 +31,9 @@ module.exports = {
         type: Sequelize.STRING
       },
       image: {
+        type: Sequelize.STRING
+      },
+      background: {
         type: Sequelize.STRING
       },
       descriptionHTML: {

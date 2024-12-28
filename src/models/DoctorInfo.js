@@ -21,20 +21,19 @@ module.exports = (sequelize, DataTypes) => {
         clinicId: {
             type: DataTypes.BIGINT,
         },
-        introduction: {
-            type: DataTypes.TEXT,
+        profile: {
+            type: DataTypes.STRING,
+            allowNull: false
         },
-        specializations: {
-            type: DataTypes.TEXT,
+        certificate: {
+            type: DataTypes.STRING,
+            allowNull: false
         },
-        workProcess: {
-            type: DataTypes.TEXT,
+        descriptionHTML: {
+            type: DataTypes.TEXT('long'),
         },
-        training: {
-            type: DataTypes.TEXT,
-        },
-        project: {
-            type: DataTypes.TEXT,
+        descriptionText: {
+            type: DataTypes.TEXT('long'),
         },
         statusId: {
             type: DataTypes.STRING,
@@ -49,8 +48,9 @@ module.exports = (sequelize, DataTypes) => {
         DoctorInfo.belongsTo(models.Allcode, { foreignKey: 'paymentId', targetKey: 'keyMap', as: 'paymentData' });
         DoctorInfo.belongsTo(models.Allcode, { foreignKey: 'statusId', targetKey: 'keyMap', as: 'statusData' });
         DoctorInfo.belongsTo(models.Clinic, { foreignKey: 'clinicId', targetKey: 'id', as: 'clinicData' });
-        DoctorInfo.belongsTo(models.Specialty, { foreignKey: 'specializations', targetKey: 'id', as: 'specializationData' });
-        DoctorInfo.belongsToMany(models.Specialty, { through: models.DoctorSpecialty, foreignKey: 'doctorId', otherKey: 'specialtyId', as: 'specialtyData' });
+        DoctorInfo.belongsToMany(models.Specialty, { through: models.DoctorSpecialty, foreignKey: 'doctorId', sourceKey: 'doctorId', as: 'specialtyData' });
+        DoctorInfo.hasMany(models.Schedule, { foreignKey: 'doctorId', sourceKey: 'doctorId', as: 'scheduleData' });
+        DoctorInfo.hasMany(models.Booking, { foreignKey: 'doctorId', sourceKey: 'doctorId', as: 'bookingData' });
     };
 
     return DoctorInfo;

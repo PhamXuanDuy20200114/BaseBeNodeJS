@@ -5,10 +5,13 @@ import initRDoctoroutes from "./routes/DoctorRoutes";
 import initSpecialtyRoutes from "./routes/SpecialtyRoutes";
 import initClinicRoutes from "./routes/ClinicRoutes";
 import initAllcodeRoutes from "./routes/AllcodeRoutes";
+import initScheduleRoutes from "./routes/ScheduleRoutes";
+import initBookingRoutes from "./routes/BookingRoutes";
+import initCommentRoutes from "./routes/CommentRoutes";
+import initNotebookRoutes from "./routes/NotebookRoutes";
 import connectDB from "./config/connectDB";
 import cors from "cors";
 import path from "path";
-
 
 require("dotenv").config();
 
@@ -37,6 +40,10 @@ initRDoctoroutes(app);
 initSpecialtyRoutes(app);
 initClinicRoutes(app);
 initAllcodeRoutes(app);
+initScheduleRoutes(app);
+initBookingRoutes(app);
+initCommentRoutes(app);
+initNotebookRoutes(app);
 
 //connect to DB
 connectDB();

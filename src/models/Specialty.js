@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
     }, {});
 
     Specialty.associate = function (models) {
-        Specialty.belongsToMany(models.DoctorInfo, { through: models.DoctorSpecialty, foreignKey: 'specialtyId', otherKey: 'doctorId', as: 'doctorData' });
+        Specialty.belongsToMany(models.DoctorInfo, { through: models.DoctorSpecialty, foreignKey: 'specialtyId', as: 'doctorData' });
     };
 
     return Specialty;

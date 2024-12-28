@@ -13,24 +13,37 @@ const registerService = async (data) => {
                 });
             }
             const userExist = await findUserByEmail(data.email);
-            if (userExist) {
+            if (userExist && userExist.RoleId) {
                 resolve({
                     errCode: 2,
                     message: 'User has already existed'
                 });
             } else {
-                const hash = hashPassword(data.password);
-                const user = await db.User.create({
-                    email: data.email,
-                    password: hash,
-                    username: data.username,
-                    phonenumber: data.phonenumber,
-                    address: data.address,
-                    birthdate: data.birthdate,
-                    gender: data.gender,
-                    image: data.image,
-                    roleId: 'R3'
-                });
+                let user = {};
+                if (userExist && !userExist.RoleId) {
+                    const hash = hashPassword(data.password);
+                    userExist.password = hash;
+                    userExist.username = data.username;
+                    userExist.phonenumber = data.phonenumber;
+                    userExist.address = data.address;
+                    userExist.birthdate = data.birthdate;
+                    userExist.gender = data.gender;
+                    userExist.image = data.image;
+                    user = await userExist.save();
+                } else {
+                    const hash = hashPassword(data.password);
+                    user = await db.User.create({
+                        email: data.email,
+                        password: hash,
+                        username: data.username,
+                        phonenumber: data.phonenumber,
+                        address: data.address,
+                        birthdate: data.birthdate,
+                        gender: data.gender,
+                        image: data.image,
+                        roleId: 'R3'
+                    });
+                }
                 resolve({
                     errCode: 0,
                     message: 'Success',
@@ -44,56 +57,101 @@ const registerService = async (data) => {
     });
 }
 
-const doctorRegisterService = async (data) => {
+const doctorRegisterService = async (data, imagePath, profilePath, certificatePath) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!data.email || !data.password || !data.userName || !data.phonenumber || !data.address ||
-                !data.priceId || !data.positionId || !data.paymentId || !data.clinicId ||
-                !data.introduction || !data.specializations || !data.workProcess || !data.training) {
+            if (!data.email || !data.password || !data.username || !data.phonenumber || !data.address || !data.birthdate || !data.statusId ||
+                !data.gender || !data.clinicId || !data.listSpecialtyId || !data.priceId || !data.paymentId || !data.positionId ||
+                !profilePath || !certificatePath) {
                 resolve({
                     errCode: 1,
                     message: 'Missing required parameters'
                 });
-            }
-            const userExist = await findUserByEmail(data.email);
-            if (userExist) {
-                resolve({
-                    errCode: 2,
-                    message: 'User has already existed'
-                });
             } else {
-                const hash = hashPassword(data.password);
-                const user = await db.User.create({
-                    email: data.email,
-                    password: hash,
-                    username: data.userName,
-                    phonenumber: data.phonenumber,
-                    address: data.address,
-                    gender: data.gender,
-                    image: data.image,
-                    roleId: 'R2'
-                });
-                const doctorData = await db.DoctorInfo.create({
-                    doctorId: user.id,
-                    priceId: data.priceId,
-                    positionId: data.positionId,
-                    paymentId: data.paymentId,
-                    clinicId: data.clinicId,
-                    introduction: data.introduction,
-                    specializations: data.specializations,
-                    workProcess: data.workProcess,
-                    training: data.training,
-                    project: data.project,
-                    statusId: 'ST1'
-                });
-                resolve({
-                    errCode: 0,
-                    message: 'Success',
-                    data: {
-                        user: user,
-                        doctorData: doctorData
+                const userExist = await findUserByEmail(data.email);
+                if (userExist) {
+                    resolve({
+                        errCode: 2,
+                        message: 'User has already existed'
+                    });
+                } else {
+                    const hash = hashPassword(data.password);
+                    let listPath = imagePath.split('\\');
+                    imagePath = listPath.slice(1).join('\\');
+                    let modifiedImgPath = process.env.URL_BASE + imagePath;
+                    const user = await db.User.create({
+                        email: data.email,
+                        password: hash,
+                        username: data.username,
+                        phonenumber: data.phonenumber,
+                        address: data.address,
+                        birthdate: data.birthdate,
+                        gender: data.gender,
+                        image: modifiedImgPath,
+                        roleId: 'R2'
+                    });
+                    let listProfilePath = profilePath.split('\\');
+                    profilePath = listProfilePath.slice(1).join('\\');
+                    let modifiedProfilePath = process.env.URL_BASE + profilePath;
+                    let listCertificatePath = certificatePath.split('\\');
+                    certificatePath = listCertificatePath.slice(1).join('\\');
+                    let modifiedCertificatePath = process.env.URL_BASE + certificatePath;
+                    const doctorData = await db.DoctorInfo.create({
+                        doctorId: user.id,
+                        clinicId: data.clinicId,
+                        priceId: data.priceId,
+                        paymentId: data.paymentId,
+                        positionId: data.positionId,
+                        profile: modifiedProfilePath,
+                        certificate: modifiedCertificatePath,
+                        descriptionHTML: data.descriptionHTML,
+                        descriptionText: data.descriptionText,
+                        statusId: data.statusId
+                    });
+
+                    if (data.listSpecialtyId && data.listSpecialtyId.length > 0) {
+                        for (let i = 0; i < data.listSpecialtyId.length; i++) {
+                            await db.DoctorSpecialty.create({
+                                doctorId: user.id,
+                                specialtyId: data.listSpecialtyId[i]
+                            });
+                        }
                     }
-                });
+                    const doctor = await db.DoctorInfo.findOne({
+                        where: {
+                            doctorId: user.id,
+                        },
+                        include: [
+                            {
+                                model: db.User, as: 'doctorData',
+                                attributes: {
+                                    exclude: ['password']
+                                },
+                                include: [
+                                    { model: db.Allcode, as: 'genderData', attributes: ['value'] }
+                                ]
+                            },
+                            { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                            { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                            { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                            { model: db.Allcode, as: 'statusData', attributes: ['value'] },
+                            { model: db.Clinic, as: 'clinicData', attributes: ['id', 'name'] },
+                            {
+                                model: db.Specialty,
+                                as: 'specialtyData',
+                                through: { attributes: [] }, // Không lấy thông tin từ bảng trung gian
+                                attributes: ['id', 'name']
+                            }
+                        ],
+                        raw: false,
+                        nest: true
+                    })
+                    resolve({
+                        errCode: 0,
+                        message: 'Success',
+                        data: doctor
+                    });
+                }
             }
         } catch (e) {
             console.log(e);
@@ -116,13 +174,26 @@ const loginService = async (data) => {
                     },
                     raw: false
                 });
-                console.log('>>>>>>>>>', userExist);
                 if (!userExist) {
                     resolve({
                         errCode: 3,
                         message: 'Account is not exist'
                     });
                 } else {
+                    if (userExist.roleId === 'R2') {
+                        let doctorInfo = await db.DoctorInfo.findOne({
+                            where: {
+                                doctorId: userExist.id
+                            },
+                            attributes: ['statusId']
+                        })
+                        if (doctorInfo.statusId === 'S1') {
+                            resolve({
+                                errCode: 5,
+                                message: 'Doctor is not active'
+                            });
+                        }
+                    }
                     if (!checkPassword(data.password, userExist.password)) {
                         resolve({
                             errCode: 4,
@@ -226,7 +297,7 @@ const generateAccessToken = (user) => {
         {
             id: user.id,
             roleId: user.roleId,
-            exp: Math.floor(Date.now() / 1000) + 10
+            exp: Math.floor(Date.now() / 1000) + 10 * 60
         },
         process.env.JWT_SECRET,
         {

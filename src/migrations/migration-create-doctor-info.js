@@ -26,20 +26,19 @@ module.exports = {
       clinicId: {
         type: Sequelize.BIGINT,
       },
-      introduction: {
-        type: Sequelize.TEXT,
+      profile: {
+        type: Sequelize.STRING,
+        allowNull: false
       },
-      specializations: {
-        type: Sequelize.TEXT,
+      certificate: {
+        type: Sequelize.STRING,
+        allowNull: false
       },
-      workProcess: {
-        type: Sequelize.TEXT,
+      descriptionHTML: {
+        type: Sequelize.TEXT('long'),
       },
-      training: {
-        type: Sequelize.TEXT,
-      },
-      project: {
-        type: Sequelize.TEXT,
+      descriptionText: {
+        type: Sequelize.TEXT('long'),
       },
       statusId: {
         type: Sequelize.STRING,

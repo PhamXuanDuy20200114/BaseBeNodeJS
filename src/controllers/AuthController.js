@@ -60,8 +60,20 @@ const refreshAccessToken = async (req, res) => {
 
 const doctorRegister = async (req, res) => {
     let body = req.body;
+    let imagePath = '';
+    let profilePath = '';
+    let certificatePath = '';
+    if (req.files && req.files['image']) {
+        imagePath = req.files['image'][0].path;
+    }
+    if (req.files && req.files['profile']) {
+        profilePath = req.files['profile'][0].path;
+    }
+    if (req.files && req.files['certificate']) {
+        certificatePath = req.files['certificate'][0].path;
+    }
     try {
-        let data = await authService.doctorRegisterService(body);
+        let data = await authService.doctorRegisterService(body, imagePath, profilePath, certificatePath);
         return res.status(200).json(
             data
         );
