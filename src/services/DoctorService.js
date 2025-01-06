@@ -1,3 +1,4 @@
+import { raw } from 'body-parser';
 import db from '../models/index';
 import { sendConfirmDoctorResult } from './EmailService';
 let fs = require('fs').promises; // Sử dụng fs.promises để có thể dùng với await
@@ -159,6 +160,7 @@ let getMoreDoctorInfo = async (id) => {
                     { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
                     { model: db.Allcode, as: 'positionData', attributes: ['value'] },
                     { model: db.Clinic, as: 'clinicData', atrributes: ['id', 'name', 'address'] },
+                    { model: db.Specialty, as: 'specialtyData', through: { attributes: [] }, attributes: ['id', 'name'] }
                 ],
                 raw: false,
                 nest: true
@@ -706,6 +708,113 @@ let saveDoctorSchedule = async (id, date, listTimes) => {
     })
 }
 
+const doctorUpdateInfo = async (id, data, path) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!id || !data) {
+                return {
+                    errCode: 1,
+                    message: 'Missing required parameter'
+                }
+            }
+            let user = await db.User.findOne({
+                where: {
+                    id: id
+                },
+                raw: false
+            });
+            let doctor = await db.DoctorInfo.findOne({
+                where: {
+                    doctorId: id
+                },
+                raw: false
+            });
+            if (doctor && user) {
+                user.email = data.email;
+                user.username = data.username;
+                user.phonenumber = data.phonenumber;
+                user.address = data.address;
+
+                doctor.clinicId = data.clinicId;
+                doctor.priceId = data.priceId;
+                doctor.paymentId = data.paymentId;
+                doctor.positionId = data.positionId;
+                doctor.statusId = 'S1';
+
+                let modifiedPath = '';
+                if (user.image) {
+                    let path = user.image.replace(process.env.URL_BASE, 'src\\'); // delete old image
+                    await fs.unlink(path); // delete old image
+                }
+                if (path) {
+                    let listPath = path.split('\\');
+                    path = listPath.slice(1).join('\\');
+                    modifiedPath = process.env.URL_BASE + path;
+                }
+                user.image = modifiedPath;
+
+                await user.save();
+                await doctor.save();
+
+                await db.DoctorSpecialty.destroy({
+                    where: {
+                        doctorId: id
+                    }
+                }); // Xóa tất cả dữ liệu trong bảng trung gian
+                for (let i = 0; i < data.listSpecialtyId.length; i++) {
+                    await db.DoctorSpecialty.create({
+                        doctorId: id,
+                        specialtyId: data.listSpecialtyId[i]
+                    });
+                }
+                let doctorInfo = await db.DoctorInfo.findOne({
+                    where: {
+                        doctorId: id,
+                    },
+                    include: [
+                        {
+                            model: db.User, as: 'doctorData',
+                            attributes: {
+                                exclude: ['password']
+                            },
+                            include: [
+                                { model: db.Allcode, as: 'genderData', attributes: ['value'] }
+                            ]
+                        },
+                        { model: db.Allcode, as: 'priceData', attributes: ['value'] },
+                        { model: db.Allcode, as: 'positionData', attributes: ['value'] },
+                        { model: db.Allcode, as: 'paymentData', attributes: ['value'] },
+                        { model: db.Allcode, as: 'statusData', attributes: ['value'] },
+                        { model: db.Clinic, as: 'clinicData', attributes: ['id', 'name', 'address'] },
+                        {
+                            model: db.Specialty,
+                            as: 'specialtyData',
+                            through: { attributes: [] }, // Không lấy thông tin từ bảng trung gian
+                            attributes: ['id', 'name']
+                        }
+                    ],
+                    raw: false,
+                    nest: true
+                })
+                resolve({
+                    errCode: 0,
+                    message: 'Success',
+                    data: doctorInfo
+                });
+
+            } else {
+                return {
+                    errCode: 2,
+                    message: 'Doctor not found'
+                }
+            }
+        } catch (e) {
+            console.log(e);
+            reject(e);
+        }
+    });
+}
+
 module.exports = {
     getAllDoctorsNotComfirm,
     confirmDoctor,
@@ -719,5 +828,6 @@ module.exports = {
     getMoreDoctorInfo,
     getDoctorBySpecialty,
     getDoctorBySpecialtyAndProvince,
-    rejectDoctor
+    rejectDoctor,
+    doctorUpdateInfo
 }

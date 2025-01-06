@@ -115,7 +115,7 @@ const getDoctorBySpecialty = async (req, res) => {
 }
 
 const getDoctorBySpecialtyAndProvince = async (req, res) => {
-    let {specialtyId, provinceId} = req.query;
+    let { specialtyId, provinceId } = req.query;
     try {
         const data = await doctorService.getDoctorBySpecialtyAndProvince(specialtyId, provinceId);
         return res.status(200).json(data);
@@ -187,6 +187,25 @@ const saveDoctorSchedule = async (req, res) => {
         });
     }
 }
+
+const doctorUpdateInfo = async (req, res) => {
+    try {
+        let id = req.params.id;
+        let newDoctorInfo = req.body;
+        let imagePath = '';
+        if (req.file) {
+            imagePath = req.file.path;
+        }
+        const data = await doctorService.doctorUpdateInfo(id, newDoctorInfo, imagePath);
+        return res.status(200).json(data);
+    } catch (e) {
+        console.log('err: ', e);
+        return res.status(200).json({
+            errCode: -1,
+            message: 'Error from server'
+        });
+    }
+}
 export default {
     getAllDoctorNotConfirm,
     confirmDoctor,
@@ -200,5 +219,6 @@ export default {
     getMoreDoctorInfo,
     getDoctorBySpecialty,
     getDoctorBySpecialtyAndProvince,
-    rejectDoctor
+    rejectDoctor,
+    doctorUpdateInfo
 }

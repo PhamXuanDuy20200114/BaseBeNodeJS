@@ -149,7 +149,18 @@ const editUser = async (id, data, path) => {
                         modifiedPath = process.env.URL_BASE + path;
                     }
                     user.image = modifiedPath;
-                    const updateUser = await user.save();
+                    await user.save();
+                    const updateUser = await db.User.findOne({
+                        where: {
+                            id: id
+                        },
+                        include: [
+                            { model: db.Allcode, as: 'roleData', attributes: ['value'] },
+                            { model: db.Allcode, as: 'genderData', attributes: ['value'] }
+                        ],
+                        raw: false,
+                        nest: true
+                    });
                     resolve({
                         errCode: 0,
                         message: 'Success',

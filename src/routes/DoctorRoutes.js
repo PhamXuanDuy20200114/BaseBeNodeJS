@@ -1,6 +1,6 @@
 import DoctorController from '../controllers/DoctorController';
 import authMiddleware from '../middleware/AuthMiddleware';
-import { uploadProfileDoctorMiddleware } from "../middleware/UploadMiddleware";
+import { uploadProfileDoctorMiddleware, uploadImageMiddleware } from "../middleware/UploadMiddleware";
 import express from "express";
 let router = express.Router();
 
@@ -16,6 +16,7 @@ let initDoctorRoutes = (app) => {
     router.post('/:id', authMiddleware.verifyDoctorToken, uploadProfileDoctorMiddleware, DoctorController.updateDoctorInfo);
     router.delete('/:id', authMiddleware.verifyDoctorToken, DoctorController.deleteDoctor);
     router.delete('/reject/:id', authMiddleware.verifyAdminToken, DoctorController.rejectDoctor);
+    router.post('/update/:id', authMiddleware.verifyDoctorToken, uploadImageMiddleware , DoctorController.doctorUpdateInfo);
     return app.use("/api/doctors", router);
 }
 

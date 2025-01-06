@@ -181,7 +181,7 @@ const uploadResulltFile = (req, res, next) => {
     const singleUpload = uploadImage.single('result'); // Tên field trong form
     singleUpload(req, res, (err) => {
         if (err) {
-            console.log('Upload img err: ', err.message);
+            console.log('Upload result err: ', err.message);
             return res.status(400).json({
                 errCode: 400,
                 message: err.message

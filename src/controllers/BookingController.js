@@ -102,8 +102,8 @@ const getBookingById = async (req, res) => {
 const updateBookingResult = async (req, res) => {
     let { bookingId } = req.body;
     let result = '';
-    if (req.files && req.files['result']) {
-        result = req.files['result'][0].path;
+    if (req.file) {
+        result = req.file.path;
     }
     try {
         let response = await bookingService.updateBookingResult(bookingId, result);

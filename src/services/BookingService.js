@@ -770,11 +770,13 @@ const updateBookingResult = async (bookingId, result) => {
                     await booking.save();
                     resolve({
                         errCode: 0,
-                        message: 'Cập nhật kết quả lịch khám thành công!'
+                        message: 'Cập nhật kết quả lịch khám thành công!',
+                        result: modifiedImgPath
                     });
                 }
             }
         } catch (error) {
+
             console.error('Error', error);
             reject(error);
         }
@@ -805,6 +807,7 @@ const getAllSumBooking = async () => {
         }
     })
 }
+
 export default {
     createNewBooking: createNewBooking,
     userConfirmBooking: userConfirmBooking,
@@ -814,5 +817,5 @@ export default {
     getBookingById: getBookingById,
     doctorRejectBooking: doctorRejectBooking,
     updateBookingResult: updateBookingResult,
-    getAllSumBooking: getAllSumBooking
+    getAllSumBooking: getAllSumBooking,
 }

@@ -170,14 +170,41 @@ const updateNotebook = async (id, data, path) => {
             notebook.title = data.title;
             notebook.contentHTML = data.contentHTML;
             notebook.contentText = data.contentText;
-            notebook.authorId = data.authorId;
-            notebook.censorId = data.censorId;
             notebook.image = modifyPath;
+            await db.AuthorNotebook.destroy({
+                where: { notebookId: id }
+            })
+            await db.CensorNotebook.destroy({
+                where: { notebookId: id }
+            })
+
+            for (let i = 0; i < data.authorId.length; i++) {
+                await db.AuthorNotebook.create({
+                    authorId: data.authorId[i],
+                    notebookId: id
+                });
+            }
+
+            for (let i = 0; i < data.censorId.length; i++) {
+                await db.CensorNotebook.create({
+                    censorId: data.censorId[i],
+                    notebookId: id
+                });
+            }
             await notebook.save();
+            let newNotebook = await db.Notebook.findOne({
+                where: { id: id },
+                include: [
+                    { model: db.User, as: 'authorData', through: { attributes: [] }, attributes: ['id', 'username'] },
+                    { model: db.User, as: 'censorData', through: { attributes: [] }, attributes: ['id', 'username'] }
+                ],
+                raw: false,
+                nest: true
+            })
             resolve({
                 errCode: 0,
                 message: 'Success',
-                data: notebook
+                data: newNotebook
             });
         } catch (error) {
             console.log('Error: ', error);

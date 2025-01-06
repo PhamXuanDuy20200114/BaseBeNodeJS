@@ -133,5 +133,5 @@ const getBodyEmail2 = (dataSend) => {
 module.exports = {
     sendSimpleEmail,
     sendBookingConfirmResult,
-    sendConfirmDoctorResult
+    sendConfirmDoctorResult,
 }
